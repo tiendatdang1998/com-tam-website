@@ -20,7 +20,7 @@ margin:6px 0 12px;border:1px solid #ccc;border-radius:8px}
 </head>
 <body>
 <header>
-  <h1>🍚 CƠM TẤM NHÀ LÀM</h1>
+  <h1>🍚 CƠM TẤM NHÀ GẤU</h1>
   <p>Cơm ngon mỗi ngày</p>
 </header>
 
@@ -66,23 +66,25 @@ margin:6px 0 12px;border:1px solid #ccc;border-radius:8px}
 </main>
 
 <script>
-// SỬA thông tin này trước khi dùng thật.
-const BANK_ID = "MB";
-const ACCOUNT_NO = "THAY_BANG_SO_TAI_KHOAN";
-const ACCOUNT_NAME = "THAY BANG TEN CHU TAI KHOAN";
+// Thông tin tài khoản nhận tiền
+const BANK_ID = "ACB";
+const ACCOUNT_NO = "144351";
+const ACCOUNT_NAME = "DANG TIEN DAT";
 
-// Giá minh họa, bạn có thể sửa lại.
+// Danh sách món ăn
 const dishes = [
-  {name:"Cơm tấm sườn", price:35000},
-  {name:"Cơm tấm sườn bì chả", price:45000},
-  {name:"Cơm tấm sườn trứng", price:42000}
+  {name: "Cơm tấm sườn", price: 35000},
+  {name: "Cơm tấm sườn bì chả", price: 45000},
+  {name: "Cơm tấm sườn trứng", price: 40000},
+  {name: "Cơm tấm sườn chả", price: 40000},
 ];
 
-let quantities = [0,0,0];
+// Tự tạo số lượng 0 cho từng món
+let quantities = dishes.map(() => 0);
 let orderSummary = "";
 
-function money(n){
-  return n.toLocaleString("vi-VN")+"đ";
+function money(n) {
+  return n.toLocaleString("vi-VN") + "đ";
 }
 
 function renderMenu(){
