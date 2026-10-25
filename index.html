@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cơm Tấm Nhà Làm</title>
+<style>
+body{font-family:Arial,sans-serif;background:#fff8ef;margin:0;color:#29251f}
+header{background:#8b3022;color:white;text-align:center;padding:24px}
+main{max-width:650px;margin:auto;padding:16px}
+.card{background:white;border-radius:12px;padding:16px;margin:12px 0}
+.item{display:flex;justify-content:space-between;align-items:center;gap:10px}
+button{padding:10px 14px;border:0;border-radius:8px;
+background:#8b3022;color:white;cursor:pointer}
+input,select,textarea{box-sizing:border-box;width:100%;padding:11px;
+margin:6px 0 12px;border:1px solid #ccc;border-radius:8px}
+.price{color:#a43c24;font-weight:bold}
+#qr{width:240px;max-width:100%;display:block;margin:12px auto}
+</style>
+</head>
+<body>
+<header>
+  <h1>🍚 CƠM TẤM NHÀ LÀM</h1>
+  <p>Cơm ngon mỗi ngày</p>
+</header>
+
+<main>
+  <h2>Thực đơn</h2>
+  <div id="menu"></div>
+
+  <section class="card">
+    <h2>Thông tin đặt món</h2>
+    <label>Họ tên</label>
+    <input id="name" placeholder="Tên người nhận">
+
+    <label>Số điện thoại</label>
+    <input id="phone" type="tel" placeholder="Số điện thoại">
+
+    <label>Nhận cơm bằng cách</label>
+    <select id="method" onchange="toggleAddress()">
+      <option value="Tại quán">Đến lấy tại quán</option>
+      <option value="Giao hàng">Giao tận nơi</option>
+    </select>
+
+    <div id="addressBox" style="display:none">
+      <label>Địa chỉ giao hàng</label>
+      <textarea id="address" placeholder="Số nhà, đường, phường"></textarea>
+    </div>
+
+    <label>Ghi chú</label>
+    <textarea id="note" placeholder="Ít cơm, thêm mỡ hành..."></textarea>
+
+    <h3>Tổng tiền: <span id="total" class="price">0đ</span></h3>
+    <button onclick="checkout()">Tạo đơn và mã QR</button>
+  </section>
+
+  <section class="card" id="payment" hidden>
+    <h2>Thanh toán chuyển khoản</h2>
+    <p>Kiểm tra đúng tên người nhận và số tiền trước khi chuyển.</p>
+    <img id="qr" alt="Mã QR thanh toán">
+    <p id="amountText"></p>
+    <p id="orderText"></p>
+    <button onclick="copyOrder()">Sao chép thông tin đơn</button>
+    <p><small>Đơn chưa được gửi đến quán. Hãy gửi thông tin đơn cho người bán và chỉ xác nhận thanh toán khi đã kiểm tra tài khoản ngân hàng.</small></p>
+  </section>
+</main>
+
+<script>
+// SỬA thông tin này trước khi dùng thật.
+const BANK_ID = "MB";
+const ACCOUNT_NO = "THAY_BANG_SO_TAI_KHOAN";
+const ACCOUNT_NAME = "THAY BANG TEN CHU TAI KHOAN";
+
+// Giá minh họa, bạn có thể sửa lại.
+const dishes = [
+  {name:"Cơm tấm sườn", price:35000},
+  {name:"Cơm tấm sườn bì chả", price:45000},
+  {name:"Cơm tấm sườn trứng", price:42000}
+];
+
+let quantities = [0,0,0];
+let orderSummary = "";
+
+function money(n){
+  return n.toLocaleString("vi-VN")+"đ";
+}
+
+function renderMenu(){
+  document.getElementById("menu").innerHTML =
+    dishes.map((d,i)=>`
+      <div class="card item">
+        <div><b>${d.name}</b><br>
+        <span class="price">${money(d.price)}</span></div>
+        <div>
+          <button onclick="changeQty(${i},-1)">−</button>
+          <b style="padding:8px">${quantities[i]}</b>
+          <button onclick="changeQty(${i},1)">+</button>
+        </div>
+      </div>`).join("");
+  document.getElementById("total").textContent =
+    money(dishes.reduce((sum,d,i)=>sum+d.price*quantities[i],0));
+}
+
+function changeQty(i,step){
+  quantities[i]=Math.max(0,quantities[i]+step);
+  renderMenu();
+}
+
+function toggleAddress(){
+  document.getElementById("addressBox").style.display =
+    document.getElementById("method").value==="Giao hàng"?"block":"none";
+}
+
+function checkout(){
+  const name=document.getElementById("name").value.trim();
+  const phone=document.getElementById("phone").value.trim();
+  const method=document.getElementById("method").value;
+  const address=document.getElementById("address").value.trim();
+  const note=document.getElementById("note").value.trim();
+  const items=dishes.map((d,i)=>({...d,qty:quantities[i]}))
+    .filter(d=>d.qty>0);
+  const total=items.reduce((sum,d)=>sum+d.price*d.qty,0);
+
+  if(!items.length){alert("Bạn hãy chọn ít nhất một món.");return;}
+  if(!name||!phone){alert("Vui lòng nhập tên và số điện thoại.");return;}
+  if(method==="Giao hàng"&&!address){
+    alert("Vui lòng nhập địa chỉ giao hàng.");return;
+  }
+
+  // Chỉ là mã đơn tạm để ghi nội dung chuyển khoản.
+  const orderId="COM"+Date.now().toString().slice(-8);
+  const content=orderId;
+  orderSummary=[
+    "ĐƠN ĐẶT CƠM TẤM",
+    "Mã đơn: "+orderId,
+    "Tên: "+name,
+    "SĐT: "+phone,
+    "Hình thức: "+method,
+    method==="Giao hàng"?"Địa chỉ: "+address:"",
+    ...items.map(d=>`${d.name} x ${d.qty}: ${money(d.price*d.qty)}`),
+    "Ghi chú: "+(note||"Không có"),
+    "Tổng tiền món: "+money(total),
+    "Nội dung chuyển khoản: "+content
+  ].filter(Boolean).join("\n");
+
+  // QR VietQR: thay thông tin tài khoản phía trên.
+  const qrUrl="https://img.vietqr.io/image/"
+    +encodeURIComponent(BANK_ID)+"-"
+    +encodeURIComponent(ACCOUNT_NO)+"-compact.png"
+    +"?amount="+total
+    +"&addInfo="+encodeURIComponent(content)
+    +"&accountName="+encodeURIComponent(ACCOUNT_NAME);
+
+  document.getElementById("qr").src=qrUrl;
+  document.getElementById("amountText").textContent=
+    "Số tiền cần chuyển: "+money(total);
+  document.getElementById("orderText").textContent=
+    "Mã đơn: "+orderId+" — Nội dung chuyển khoản: "+content;
+  document.getElementById("payment").hidden=false;
+  document.getElementById("payment").scrollIntoView({behavior:"smooth"});
+}
+
+async function copyOrder(){
+  try{
+    await navigator.clipboard.writeText(orderSummary);
+    alert("Đã sao chép thông tin đơn hàng.");
+  }catch(e){
+    prompt("Hãy sao chép thông tin đơn hàng:",orderSummary);
+  }
+}
+
+renderMenu();
+</script>
+</body>
+</html>
